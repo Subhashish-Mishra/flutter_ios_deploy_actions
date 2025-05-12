@@ -34,25 +34,25 @@ _NOTICE: Give your appstore email address and the Challenge password which will 
 <details>
 <summary>Explanation</summary>
 
- **Options**      | **Description**                                            
-------------------|------------------------------------------------------------
- -new             | New request
- -newkey rsa:2048 | To create a 2048-bit RSA key
- -nodes           | This is used as it doesn't encrypt the key  
- -keyout          | Specifying filename to send the key to the sample.com.csr
- -out             | Specifying file name to write to CSR
+ | **Options**      | **Description**                                           |
+ | ---------------- | --------------------------------------------------------- |
+ | -new             | New request                                               |
+ | -newkey rsa:2048 | To create a 2048-bit RSA key                              |
+ | -nodes           | This is used as it doesn't encrypt the key                |
+ | -keyout          | Specifying filename to send the key to the sample.com.csr |
+ | -out             | Specifying file name to write to CSR                      |
 
 You will be prompted to enter information (in order) such as:
- **Requested Information** | **Description**                                                                                                 
- ---------------------------|--------------------------------------------------
- Country Name               | Two-letter abbreviation for the country you reside in
- State or Province Name     | Full name of the state from where your organization operates
- Locality Name              | Name of the city where the organization operates from             
- Organization Name          | Name of Organization. If registered as an individual, enter the name of the person requesting the certificate.
- Organizational Unit Name   | Section or sector in whichthe organization operates
- Common Name                | The domain name to whom you're purchasing an SSL certificate.It should be a Fully Qualified Domain Name                                       
- Email Address **\***       | A email address associated with app store connect
- Challenge password **\***  | Password to be sent with your certificate request
+ | **Requested Information** | **Description**                                                                                                |
+ | ------------------------- | -------------------------------------------------------------------------------------------------------------- |
+ | Country Name              | Two-letter abbreviation for the country you reside in                                                          |
+ | State or Province Name    | Full name of the state from where your organization operates                                                   |
+ | Locality Name             | Name of the city where the organization operates from                                                          |
+ | Organization Name         | Name of Organization. If registered as an individual, enter the name of the person requesting the certificate. |
+ | Organizational Unit Name  | Section or sector in whichthe organization operates                                                            |
+ | Common Name               | The domain name to whom you're purchasing an SSL certificate.It should be a Fully Qualified Domain Name        |
+ | Email Address **\***      | A email address associated with app store connect                                                              |
+ | Challenge password **\*** | Password to be sent with your certificate request                                                              |
   **_\* - required_**
 </details>
 
@@ -182,6 +182,8 @@ _(hope you remember)_
 ## Export options
 create a file **exportOptions.plist** in ios folder and use the below content,
 make the appropriate changes as described
+
+_Note: add the values without the square brackets [ ]_
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -195,14 +197,13 @@ make the appropriate changes as described
         <string>app-store</string>
         <key>signingCertificate</key>
         <!-- Distribution certificate with teamID -->
-        <!-- without [ and ] -->
         <string>Apple Distribution: [team-name] ([teamID])</string>
         <key>provisioningProfiles</key>
         <dict>
             <!-- BundleID -->
             <key>com.example.app</key> 
             <!-- Provisioning Profile name -->
-            <string>Janmakundali_provisioning_profile</string> 
+            <string>[provisioning profile name]</string> 
         </dict>
         <key>signingStyle</key>
         <string>manual</string>
