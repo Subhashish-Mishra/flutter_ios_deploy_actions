@@ -221,3 +221,204 @@ _Note: add the values without the square brackets [ ]_
 ```
 
 ## Xcode project setup
+### Adding values to the xcode project (.pbxproj) file 
+
+Just merge the values to the XCBuildConfiguration sections
+
+```
+249021D4217E4FDB00AE95B9 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
+			buildSettings = {
+				...
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
+				...
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = <teamID>;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.app;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "<provisioning profile name>";
+				...
+			};
+			name = Profile;
+		};
+		331C8088294A63A400263BE5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				...
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = <teamID>;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.app.RunnerTests;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "<provisioning profile name>";
+				...
+			};
+			name = Debug;
+		};
+		331C8089294A63A400263BE5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				...
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = <teamID>;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.app.RunnerTests;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "<provisioning profile name>";
+				...
+			};
+			name = Release;
+		};
+		331C808A294A63A400263BE5 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				...
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = <teamID>;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.app.RunnerTests;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "<provisioning profile name>";
+				...
+			};
+			name = Profile;
+		};
+        97C147061CF9000F007C117D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9740EEB21CF90195004384FC /* Debug.xcconfig */;
+			buildSettings = {
+				...
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				...
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = <teamID>;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.app;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "<provisioning profile name>";
+				...
+			};
+			name = Debug;
+		};
+		97C147071CF9000F007C117D /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
+			buildSettings = {
+				...
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution";
+				CODE_SIGN_STYLE = Manual;
+				...
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = <teamID>;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.app;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "<provisioning profile name>";
+				...
+			};
+			name = Release;
+		};
+```
+
+
+## Workflow file
+
+``` yml
+name: iOS - Build and Release
+
+on:
+  push:
+    branches: release
+
+jobs:
+  # Build jobs
+  build-prod:
+    name: Production build the flutter app and sign
+    runs-on: macos-latest
+
+    steps:
+      # Check the Xcode version
+      - name: Check Xcode version
+        run: /usr/bin/xcodebuild -version
+
+      # Checks-out our repository under $GITHUB_WORKSPACE, so our job can access it
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Install the Apple certificate and provisioning profile
+      - name: Install the Apple certificate and provisioning profile
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISIONING_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+
+          # create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # import certificate and provisioning profile from secrets
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+          echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+
+          # create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # import certificate to keychain
+          security import $CERTIFICATE_PATH \
+          -P "$P12_PASSWORD" \
+          -A -t cert -f pkcs12 \
+          -k $KEYCHAIN_PATH
+
+          security set-key-partition-list \
+          -S apple-tool:,apple: \
+          -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+          # apply provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+          ln -s ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles \
+          ~/Library/MobileDevice/Provisioning\ Profiles
+
+      # Install flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.29.1" # or the latest
+
+      # Install your project's dependencies
+      - run: flutter pub get
+
+      # Build and sign the ipa using a single flutter command
+      - name: Building IPA
+        run: flutter build ipa --release --export-options-plist=ios/exportOptions.plist
+
+      # Create and import app store connect api key
+      - name: Import Appstore api key and upload app
+        env:
+          APPSTORE_API_KEY_BASE64: ${{ secrets.APPSTORE_API_KEY_BASE64 }}
+          APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+          APPSTORE_API_KEY: ${{ secrets.APPSTORE_API_KEY }}
+        run: |
+
+          # create app store connect api key filepath
+          mkdir ~/private_keys
+          APPSTORE_API_KEY_PATH=~/private_keys/AuthKey_$APPSTORE_API_KEY.p8
+
+          # import api key from secrets
+          echo -n "$APPSTORE_API_KEY_BASE64" | base64 --decode -o $APPSTORE_API_KEY_PATH
+
+          # upload the ipa to app store
+          xcrun altool --upload-app --type ios -f build/ios/ipa/*.ipa \
+          --apiKey "$APPSTORE_API_KEY" --apiIssuer "$APPSTORE_API_ISSUER_ID"
+
+```
