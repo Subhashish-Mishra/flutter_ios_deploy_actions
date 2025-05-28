@@ -23,7 +23,7 @@ Need these following github actions secrets
 - `BUILD_PROVISIONING_PROFILE_BASE64`
 - `APPSTORE_API_KEY_BASE64`
 - `APPSTORE_API_ISSUER_ID`
-- `APPSTORE_API_KEY`
+- `APPSTORE_API_KEY_ID`
 - `KEYCHAIN_PASSWORD`
 
 # Key Generations
@@ -155,7 +155,9 @@ base64 distribution.p12
 ```
 copy the output and add to the secret `BUILD_CERTIFICATE_BASE64`
 
+#### Distribution Certificate password
 
+Copy and store the Distribution Certificate password to `P12_PASSWORD` 
 
 ---
 
@@ -166,6 +168,8 @@ base64 provisioning_profile.mobileprovision
 
 copy and add the output to secret `BUILD_PROVISIONING_PROFILE_BASE64`
 
+## Store other values to the github secrets
+
 #### For App store connect api key - .p8
 ```bash
 base64 AuthKey_123456WXYZ.p8
@@ -173,19 +177,13 @@ base64 AuthKey_123456WXYZ.p8
 
 copy and add the output to secret `APPSTORE_API_KEY_BASE64`
 
-## Store other values to the github secrets
-
-#### Distribution Certificate password
-
-Copy and store the Distribution Certificate password to `P12_PASSWORD` 
-
 #### IssuerID
 
 Copy and store the App store connect api key IssuerID to `APPSTORE_API_ISSUER_ID` 
 
 #### App store connect api key ID
 
-Copy and store the App store connect api key ID which look like 123456WXYZ to `APPSTORE_API_KEY` 
+Copy and store the App store connect api key ID which look like 123456WXYZ to `APPSTORE_API_KEY_ID` 
 
 #### Keychain password
 
@@ -422,18 +420,18 @@ jobs:
         env:
           APPSTORE_API_KEY_BASE64: ${{ secrets.APPSTORE_API_KEY_BASE64 }}
           APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
-          APPSTORE_API_KEY: ${{ secrets.APPSTORE_API_KEY }}
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
         run: |
 
           # create app store connect api key filepath
           mkdir ~/private_keys
-          APPSTORE_API_KEY_PATH=~/private_keys/AuthKey_$APPSTORE_API_KEY.p8
+          APPSTORE_API_KEY_PATH=~/private_keys/AuthKey_$APPSTORE_API_KEY_ID.p8
 
           # import App store connect api key from secrets
           echo -n "$APPSTORE_API_KEY_BASE64" | base64 --decode -o $APPSTORE_API_KEY_PATH
 
           # upload the ipa to app store
           xcrun altool --upload-app --type ios -f build/ios/ipa/*.ipa \
-          --apiKey "$APPSTORE_API_KEY" --apiIssuer "$APPSTORE_API_ISSUER_ID"
+          --apiKey "$APPSTORE_API_KEY_ID" --apiIssuer "$APPSTORE_API_ISSUER_ID"
 
 ```
